@@ -12,6 +12,7 @@ class ACharacter;
 class UPrimitiveComponent;
 class UStaticMeshComponent;
 class UMaterialInterface;
+class UMaterialInstanceDynamic;
 
 /**
  *  Simple projectile class for a first person shooter game
@@ -38,6 +39,18 @@ protected:
 	/** Base decal material to spawn on hit */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Projectile|Decal")
 	UMaterialInterface* baseMat;
+
+	/** Base projectile material to use for dynamic color changes */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Projectile|Material")
+	UMaterialInterface* projectileMaterial;
+
+	/** Dynamic material instance for the projectile mesh */
+	UPROPERTY()
+	UMaterialInstanceDynamic* dmiMat;
+
+	/** Randomized color generated on BeginPlay to share between projectile and decal */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Projectile|Color")
+	FLinearColor randColor;
 
 	/** Loudness of the AI perception noise done by this projectile on hit */
 	UPROPERTY(EditAnywhere, Category="Projectile|Noise", meta = (ClampMin = 0, ClampMax = 100))

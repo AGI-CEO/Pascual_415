@@ -32,6 +32,7 @@ AShooterProjectile::AShooterProjectile()
 	// create the ball mesh component and attach it to collision component
 	ballMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Ball Mesh"));
 	ballMesh->SetupAttachment(CollisionComponent);
+	ballMesh->SetRelativeScale3D(FVector(0.125f, 0.125f, 0.125f));
 
 	// create the projectile movement component. No need to attach it because it's not a Scene Component
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement"));
@@ -39,6 +40,7 @@ AShooterProjectile::AShooterProjectile()
 	ProjectileMovement->InitialSpeed = 3000.0f;
 	ProjectileMovement->MaxSpeed = 3000.0f;
 	ProjectileMovement->bShouldBounce = true;
+	ProjectileMovement->Bounciness = 0.6f;
 
 	// set the default damage type
 	HitDamageType = UDamageType::StaticClass();
@@ -50,6 +52,30 @@ void AShooterProjectile::BeginPlay()
 	
 	// ignore the pawn that shot this projectile
 	CollisionComponent->IgnoreActorWhenMoving(GetInstigator(), true);
+
+	// Generate random color for projectile and decal (four-vector / X, Y, Z, Alpha)
+	float ranNumX = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
+	float ranNumY = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
+	float ranNumZ = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
+	randColor = FLinearColor(ranNumX, ranNumY, ranNumZ, 1.0f);
+
+	// Create dynamic material instance for projectile mesh
+	if (projectileMaterial)
+	{
+		dmiMat = UMaterialInstanceDynamic::Create(projectileMaterial, this);
+	}
+	else if (ballMesh && ballMesh->GetMaterial(0))
+	{
+		dmiMat = ballMesh->CreateDynamicMaterialInstance(0);
+	}
+
+	if (ballMesh && dmiMat)
+	{
+		ballMesh->SetMaterial(0, dmiMat);
+		dmiMat->SetVectorParameterValue(TEXT("ProjColor"), randColor);
+		dmiMat->SetVectorParameterValue(TEXT("Projectile Color"), randColor);
+		dmiMat->SetVectorParameterValue(TEXT("Color"), randColor);
+	}
 }
 
 void AShooterProjectile::EndPlay(EEndPlayReason::Type EndPlayReason)
@@ -70,20 +96,11 @@ void AShooterProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Ot
 
 	bHit = true;
 
-	// disable collision on the projectile
-	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	// make AI perception noise
 	MakeNoise(NoiseLoudness, GetInstigator(), GetActorLocation(), NoiseRange, NoiseTag);
 
 	if (Other != nullptr)
 	{
-		float Red = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
-		float Green = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
-		float Blue = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
-
-		FLinearColor randColor = FLinearColor(Red, Green, Blue, 1.0f);
-
 		float FrameNumber = UKismetMathLibrary::RandomFloatInRange(0.0f, 3.0f);
 
 		float DecalSize = UKismetMathLibrary::RandomFloatInRange(20.0f, 40.0f);
