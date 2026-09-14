@@ -10,6 +10,8 @@ class USphereComponent;
 class UProjectileMovementComponent;
 class ACharacter;
 class UPrimitiveComponent;
+class UStaticMeshComponent;
+class UMaterialInterface;
 
 /**
  *  Simple projectile class for a first person shooter game
@@ -23,11 +25,19 @@ class PASCUAL_415_API AShooterProjectile : public AActor
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	USphereComponent* CollisionComponent;
 
+	/** Ball mesh component for the projectile */
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
+	UStaticMeshComponent* ballMesh;
+
 	/** Handles movement for the projectile */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Components", meta = (AllowPrivateAccess = "true"))
 	UProjectileMovementComponent* ProjectileMovement;
 
 protected:
+
+	/** Base decal material to spawn on hit */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Projectile|Decal")
+	UMaterialInterface* baseMat;
 
 	/** Loudness of the AI perception noise done by this projectile on hit */
 	UPROPERTY(EditAnywhere, Category="Projectile|Noise", meta = (ClampMin = 0, ClampMax = 100))
@@ -79,6 +89,9 @@ public:
 
 	/** Constructor */
 	AShooterProjectile();
+
+	/** Returns ballMesh subobject **/
+	FORCEINLINE UStaticMeshComponent* GetBallMesh() const { return ballMesh; }
 
 protected:
 	

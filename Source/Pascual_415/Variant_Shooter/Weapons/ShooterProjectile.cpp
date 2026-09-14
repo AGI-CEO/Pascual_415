@@ -3,9 +3,13 @@
 
 #include "ShooterProjectile.h"
 #include "Components/SphereComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/DecalComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "GameFramework/DamageType.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/Controller.h"
@@ -24,6 +28,10 @@ AShooterProjectile::AShooterProjectile()
 	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Block);
 	CollisionComponent->CanCharacterStepUpOn = ECanBeCharacterBase::ECB_No;
+
+	// create the ball mesh component and attach it to collision component
+	ballMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Ball Mesh"));
+	ballMesh->SetupAttachment(CollisionComponent);
 
 	// create the projectile movement component. No need to attach it because it's not a Scene Component
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement"));
@@ -67,6 +75,30 @@ void AShooterProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Ot
 
 	// make AI perception noise
 	MakeNoise(NoiseLoudness, GetInstigator(), GetActorLocation(), NoiseRange, NoiseTag);
+
+	if (Other != nullptr)
+	{
+		float Red = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
+		float Green = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
+		float Blue = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
+
+		FLinearColor randColor = FLinearColor(Red, Green, Blue, 1.0f);
+
+		float FrameNumber = UKismetMathLibrary::RandomFloatInRange(0.0f, 3.0f);
+
+		float DecalSize = UKismetMathLibrary::RandomFloatInRange(20.0f, 40.0f);
+
+		auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), baseMat, FVector(DecalSize, DecalSize, DecalSize), Hit.Location, Hit.Normal.Rotation(), 0.0f);
+		if (Decal)
+		{
+			auto MatInstance = Decal->CreateDynamicMaterialInstance();
+			if (MatInstance)
+			{
+				MatInstance->SetVectorParameterValue(TEXT("Color"), randColor);
+				MatInstance->SetScalarParameterValue(TEXT("Frame"), FrameNumber);
+			}
+		}
+	}
 
 	if (bExplodeOnHit)
 	{
