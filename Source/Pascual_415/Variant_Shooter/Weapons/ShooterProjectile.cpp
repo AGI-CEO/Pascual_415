@@ -16,6 +16,9 @@
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 
 AShooterProjectile::AShooterProjectile()
 {
@@ -33,6 +36,8 @@ AShooterProjectile::AShooterProjectile()
 	ballMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Ball Mesh"));
 	ballMesh->SetupAttachment(CollisionComponent);
 	ballMesh->SetRelativeScale3D(FVector(0.125f, 0.125f, 0.125f));
+	ballMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ballMesh->SetCollisionProfileName(TEXT("NoCollision"));
 
 	// create the projectile movement component. No need to attach it because it's not a Scene Component
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("Projectile Movement"));
@@ -53,13 +58,13 @@ void AShooterProjectile::BeginPlay()
 	// ignore the pawn that shot this projectile
 	CollisionComponent->IgnoreActorWhenMoving(GetInstigator(), true);
 
-	// Generate random color for projectile and decal (four-vector / X, Y, Z, Alpha)
+	// Pick random RGB values between 0 and 1 to make a random color
 	float ranNumX = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
 	float ranNumY = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
 	float ranNumZ = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
 	randColor = FLinearColor(ranNumX, ranNumY, ranNumZ, 1.0f);
 
-	// Create dynamic material instance for projectile mesh
+	// Create a dynamic material instance so we can change colors at runtime
 	if (projectileMaterial)
 	{
 		dmiMat = UMaterialInstanceDynamic::Create(projectileMaterial, this);
@@ -69,6 +74,7 @@ void AShooterProjectile::BeginPlay()
 		dmiMat = ballMesh->CreateDynamicMaterialInstance(0);
 	}
 
+	// Apply the random color to the projectile mesh
 	if (ballMesh && dmiMat)
 	{
 		ballMesh->SetMaterial(0, dmiMat);
@@ -99,22 +105,85 @@ void AShooterProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Ot
 	// make AI perception noise
 	MakeNoise(NoiseLoudness, GetInstigator(), GetActorLocation(), NoiseRange, NoiseTag);
 
+	// Spawn the splatter decal on the hit surface with the random color
 	if (Other != nullptr)
 	{
 		float FrameNumber = UKismetMathLibrary::RandomFloatInRange(0.0f, 3.0f);
 
 		float DecalSize = UKismetMathLibrary::RandomFloatInRange(20.0f, 40.0f);
 
-		auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), baseMat, FVector(DecalSize, DecalSize, DecalSize), Hit.Location, Hit.Normal.Rotation(), 0.0f);
-		if (Decal)
+		UMaterialInterface* DecalMat = baseMat ? baseMat : LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/Splatter/Splat1_MAT.Splat1_MAT"));
+		if (DecalMat)
 		{
-			auto MatInstance = Decal->CreateDynamicMaterialInstance();
-			if (MatInstance)
+			auto Decal = UGameplayStatics::SpawnDecalAtLocation(GetWorld(), DecalMat, FVector(DecalSize, DecalSize, DecalSize), Hit.Location, Hit.Normal.Rotation(), 0.0f);
+			if (Decal)
 			{
-				MatInstance->SetVectorParameterValue(TEXT("Color"), randColor);
-				MatInstance->SetScalarParameterValue(TEXT("Frame"), FrameNumber);
+				auto MatInstance = Decal->CreateDynamicMaterialInstance();
+				if (MatInstance)
+				{
+					MatInstance->SetVectorParameterValue(TEXT("Color"), randColor);
+					MatInstance->SetScalarParameterValue(TEXT("Frame"), FrameNumber);
+				}
 			}
 		}
+	}
+
+	// Spawn the particle effect at the hit location and set its color
+	UNiagaraSystem* ParticleSys = colorP ? colorP : LoadObject<UNiagaraSystem>(nullptr, TEXT("/Game/Materials/Confetti_P.Confetti_P"));
+	if (ParticleSys)
+	{
+		UNiagaraComponent* particleComp = nullptr;
+		if (OtherComp)
+		{
+			particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(
+				ParticleSys, 
+				OtherComp, 
+				NAME_None, 
+				Hit.Location, 
+				Hit.Normal.Rotation(), 
+				EAttachLocation::KeepWorldPosition, 
+				true
+			);
+		}
+		if (!particleComp)
+		{
+			particleComp = UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+				GetWorld(), 
+				ParticleSys, 
+				Hit.Location, 
+				Hit.Normal.Rotation(), 
+				FVector(1.f), 
+				true
+			);
+		}
+
+		if (particleComp)
+		{
+			particleComp->SetVariableLinearColor(TEXT("RandColor"), randColor);
+			particleComp->SetVariableLinearColor(TEXT("RandomColor"), randColor);
+		}
+	}
+
+	// Hide and remove the ball mesh so it disappears immediately on impact
+	if (ballMesh)
+	{
+		ballMesh->SetVisibility(false, true);
+		ballMesh->SetHiddenInGame(true, true);
+		ballMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		ballMesh->DestroyComponent();
+	}
+
+	// Turn off collision and stop movement so the projectile doesn't bounce
+	if (CollisionComponent)
+	{
+		CollisionComponent->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		CollisionComponent->SetCollisionProfileName(TEXT("NoCollision"));
+	}
+
+	if (ProjectileMovement)
+	{
+		ProjectileMovement->StopMovementImmediately();
+		ProjectileMovement->Deactivate();
 	}
 
 	if (bExplodeOnHit)

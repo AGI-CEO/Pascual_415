@@ -13,6 +13,7 @@ class UPrimitiveComponent;
 class UStaticMeshComponent;
 class UMaterialInterface;
 class UMaterialInstanceDynamic;
+class UNiagaraSystem;
 
 /**
  *  Simple projectile class for a first person shooter game
@@ -97,6 +98,10 @@ protected:
 
 	/** Timer to handle deferred destruction of this projectile */
 	FTimerHandle DestructionTimer;
+
+	// Particle system spawned when the projectile hits a surface
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="Projectile|Particles")
+	UNiagaraSystem* colorP;
 
 public:	
 
