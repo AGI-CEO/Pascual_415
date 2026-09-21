@@ -5,6 +5,9 @@
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Pascual_415Character.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
 
 // Sets default values
 ACubeDMIMod::ACubeDMIMod()
@@ -56,6 +59,7 @@ void ACubeDMIMod::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 	APascual_415Character* overlappedActor = Cast<APascual_415Character>(OtherActor);
 	if (overlappedActor || (OtherActor && OtherActor->ActorHasTag("Player")))
 	{
+		// Pick random RGB values between 0 and 1 to create a random color
 		float ranNumX = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
 		float ranNumY = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
 		float ranNumZ = UKismetMathLibrary::RandomFloatInRange(0.0f, 1.0f);
@@ -63,8 +67,19 @@ void ACubeDMIMod::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActo
 		FLinearColor randColor = FLinearColor(ranNumX, ranNumY, ranNumZ, 1.0f);
 		if (dmiMat)
 		{
+			// Update the cube material with the random color
 			dmiMat->SetVectorParameterValue("Color", randColor);
 			dmiMat->SetScalarParameterValue("Darkness", ranNumX);
+
+			// Spawn the particle effect on the player and set its color parameter
+			if (colorP)
+			{
+				UNiagaraComponent* particleComp = UNiagaraFunctionLibrary::SpawnSystemAttached(colorP, OtherComp, NAME_None, FVector(0.f), FRotator(0.f), EAttachLocation::KeepRelativeOffset, true);
+				if (particleComp)
+				{
+					particleComp->SetVariableLinearColor(TEXT("RandColor"), randColor);
+				}
+			}
 		}
 		else
 		{
