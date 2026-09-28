@@ -7,6 +7,7 @@
 #include "ProcPlane.generated.h"
 
 class UProceduralMeshComponent;
+class UMaterialInterface;
 
 UCLASS()
 class PASCUAL_415_API AProcPlane : public AActor
@@ -26,10 +27,16 @@ public:
 	UProceduralMeshComponent* procMesh;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Mesh")
+	UMaterialInterface* PlaneMat;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Mesh")
 	TArray<FVector> Vertices;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Mesh")
 	TArray<int32> Triangles;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Mesh")
+	TArray<FVector2D> UV0;
 
 	void CreateMesh();
 };

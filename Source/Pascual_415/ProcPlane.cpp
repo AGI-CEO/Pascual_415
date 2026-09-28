@@ -2,6 +2,7 @@
 
 #include "ProcPlane.h"
 #include "ProceduralMeshComponent.h"
+#include "Materials/MaterialInterface.h"
 
 // Sets default values
 AProcPlane::AProcPlane()
@@ -34,10 +35,15 @@ void AProcPlane::CreateMesh()
 			Vertices,
 			Triangles,
 			TArray<FVector>(),
-			TArray<FVector2D>(),
+			UV0,
 			TArray<FColor>(),
 			TArray<FProcMeshTangent>(),
 			true
 		);
+
+		if (PlaneMat)
+		{
+			procMesh->SetMaterial(0, PlaneMat);
+		}
 	}
 }
