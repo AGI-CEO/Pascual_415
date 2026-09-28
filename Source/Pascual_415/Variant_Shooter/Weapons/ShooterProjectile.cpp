@@ -19,6 +19,7 @@
 #include "NiagaraFunctionLibrary.h"
 #include "NiagaraComponent.h"
 #include "NiagaraSystem.h"
+#include "PerlinProcTerrain.h"
 
 AShooterProjectile::AShooterProjectile()
 {
@@ -104,6 +105,17 @@ void AShooterProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Ot
 
 	// make AI perception noise
 	MakeNoise(NoiseLoudness, GetInstigator(), GetActorLocation(), NoiseRange, NoiseTag);
+
+	// If we hit procedural terrain, alter the terrain mesh at the impact point
+	APerlinProcTerrain* procTerrain = Cast<APerlinProcTerrain>(Other);
+	if (!procTerrain)
+	{
+		procTerrain = Cast<APerlinProcTerrain>(Hit.GetActor());
+	}
+	if (procTerrain)
+	{
+		procTerrain->AlterMesh(Hit.ImpactPoint);
+	}
 
 	// Spawn the splatter decal on the hit surface with the random color
 	if (Other != nullptr)
