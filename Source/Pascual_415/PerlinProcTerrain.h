@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -16,9 +16,9 @@ class PASCUAL_415_API APerlinProcTerrain : public AActor
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	APerlinProcTerrain();
 
+	// customizable terrain settings for grid size, noise height, spacing, and digging
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Terrain", meta = (ClampMin = "0"))
 	int32 XSize;
 
@@ -50,6 +50,7 @@ public:
 	UProceduralMeshComponent* procMesh;
 
 protected:
+	// lifecycle functions to generate the mesh in-game and live in the editor
 	virtual void BeginPlay() override;
 	virtual void PostActorCreated() override;
 	virtual void PostLoad() override;
@@ -62,6 +63,7 @@ protected:
 	UMaterialInterface* Material;
 
 public:	
+	// vertex and triangle data buffers used to render the procedural mesh
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Mesh")
 	TArray<FVector> Vertices;
 
@@ -77,6 +79,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Procedural Mesh")
 	TArray<FProcMeshTangent> Tangents;
 
+	// functions for generating the terrain geometry and digging into it on impact
 	UFUNCTION(BlueprintCallable, Category = "Terrain")
 	void AlterMesh(FVector ImpactPoint);
 

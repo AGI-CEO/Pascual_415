@@ -106,7 +106,7 @@ void AShooterProjectile::NotifyHit(class UPrimitiveComponent* MyComp, AActor* Ot
 	// make AI perception noise
 	MakeNoise(NoiseLoudness, GetInstigator(), GetActorLocation(), NoiseRange, NoiseTag);
 
-	// If we hit procedural terrain, alter the terrain mesh at the impact point
+	// if we hit the procedural terrain, dig a hole at the bullet impact point
 	APerlinProcTerrain* procTerrain = Cast<APerlinProcTerrain>(Other);
 	if (!procTerrain)
 	{

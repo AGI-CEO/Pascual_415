@@ -1,13 +1,12 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// fill out your copyright notice in the Description page of Project Settings.
 
 #include "PerlinProcTerrain.h"
 #include "KismetProceduralMeshLibrary.h"
 #include "Materials/MaterialInterface.h"
 
-// Sets default values
+// initialize default subobjects and starting settings for the terrain
 APerlinProcTerrain::APerlinProcTerrain()
 {
-	// Set this actor to call Tick() every frame. You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
 	procMesh = CreateDefaultSubobject<UProceduralMeshComponent>(TEXT("procMesh"));
@@ -24,6 +23,7 @@ APerlinProcTerrain::APerlinProcTerrain()
 	sectionID = 0;
 }
 
+// build the terrain when playing the game or loading into the editor
 void APerlinProcTerrain::BeginPlay()
 {
 	Super::BeginPlay();
@@ -43,6 +43,7 @@ void APerlinProcTerrain::PostLoad()
 }
 
 #if WITH_EDITOR
+// rebuild the mesh live when tweaking properties in the editor details panel
 void APerlinProcTerrain::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -50,6 +51,7 @@ void APerlinProcTerrain::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 }
 #endif
 
+// rebuilds the entire 3D terrain mesh from scratch
 void APerlinProcTerrain::GenerateMesh()
 {
 	Vertices.Reset();
@@ -61,6 +63,7 @@ void APerlinProcTerrain::GenerateMesh()
 	CreateVertices();
 	CreateTriangles();
 
+	// calculate smooth normals and tangents for proper lighting
 	UKismetProceduralMeshLibrary::CalculateTangentsForMesh(Vertices, Triangles, UVs, Normals, Tangents);
 
 	if (procMesh)
@@ -83,6 +86,7 @@ void APerlinProcTerrain::GenerateMesh()
 	}
 }
 
+// generate grid vertices using 2D perlin noise to set the height of each point
 void APerlinProcTerrain::CreateVertices()
 {
 	for (int32 X = 0; X <= XSize; X++)
@@ -96,6 +100,7 @@ void APerlinProcTerrain::CreateVertices()
 	}
 }
 
+// connects grid vertices into pairs of clockwise triangles to create 3D quads
 void APerlinProcTerrain::CreateTriangles()
 {
 	int32 Vertex = 0;
@@ -117,6 +122,7 @@ void APerlinProcTerrain::CreateTriangles()
 	}
 }
 
+// lowers all vertices within the blast radius to dig a hole at the impact point
 void APerlinProcTerrain::AlterMesh(FVector ImpactPoint)
 {
 	FVector tempVector = ImpactPoint - GetActorLocation();
