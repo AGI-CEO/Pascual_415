@@ -69,13 +69,13 @@ void AShooterProjectile::BeginPlay()
 	{
 		dmiMat = UMaterialInstanceDynamic::Create(projectileMaterial, this);
 	}
-	else if (ballMesh && ballMesh->GetMaterial(0))
+	else if (IsValid(ballMesh) && ballMesh->GetMaterial(0))
 	{
 		dmiMat = ballMesh->CreateDynamicMaterialInstance(0);
 	}
 
 	// Apply the random color to the projectile mesh
-	if (ballMesh && dmiMat)
+	if (IsValid(ballMesh) && dmiMat)
 	{
 		ballMesh->SetMaterial(0, dmiMat);
 		dmiMat->SetVectorParameterValue(TEXT("ProjColor"), randColor);
