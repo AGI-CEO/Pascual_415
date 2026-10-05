@@ -42,6 +42,8 @@ APascual_415Character::APascual_415Character()
 	// Configure character movement
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
+
+	isTeleporting = false;
 }
 
 void APascual_415Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

@@ -90,5 +90,9 @@ public:
 	/** Returns first person camera component **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 
+	/** Flag to prevent infinite teleport loops between linked portals */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Portal")
+	bool isTeleporting;
+
 };
 
