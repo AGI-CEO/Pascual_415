@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// fill out your copyright notice in the Description page of Project Settings.
 
 #include "Portal.h"
 #include "Pascual_415Character.h"
@@ -6,10 +6,9 @@
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/TextureRenderTarget2D.h"
 
-// Sets default values
+// set up all the components, attach them together, and make sure the portal doesn't cast shadows or block the player
 APortal::APortal()
 {
-	// Set this actor to call Tick() every frame.
 	PrimaryActorTick.bCanEverTick = true;
 
 	BoxComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxComponent"));
@@ -30,6 +29,7 @@ APortal::APortal()
 	rootArrow->SetupAttachment(RootComponent);
 }
 
+// apply our material and render target directly in the editor so we don't have to hit play to see it
 void APortal::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
@@ -45,7 +45,7 @@ void APortal::OnConstruction(const FTransform& Transform)
 	}
 }
 
-// Called when the game starts or when spawned
+// hook up the overlap trigger and hide both portals from the camera so they don't block the view
 void APortal::BeginPlay()
 {
 	Super::BeginPlay();
@@ -86,7 +86,7 @@ void APortal::BeginPlay()
 	}
 }
 
-// Called every frame
+// update the portal camera position every frame
 void APortal::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -94,6 +94,7 @@ void APortal::Tick(float DeltaTime)
 	UpdatePortals();
 }
 
+// when the player walks into the portal, teleport them to the other portal's arrow and start a 1 second cooldown
 void APortal::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	APascual_415Character* PlayerCharacter = Cast<APascual_415Character>(OtherActor);
@@ -117,6 +118,7 @@ void APortal::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherA
 	}
 }
 
+// reset the teleport cooldown so the player can use portals again
 void APortal::SetBool(APascual_415Character* PlayerCharacter)
 {
 	if (PlayerCharacter)
@@ -125,6 +127,7 @@ void APortal::SetBool(APascual_415Character* PlayerCharacter)
 	}
 }
 
+// move and rotate the camera at the other portal to match our player's viewpoint so it looks like a real window
 void APortal::UpdatePortals()
 {
 	if (!OtherPortal || !sceneCapture)

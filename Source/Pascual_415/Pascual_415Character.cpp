@@ -43,6 +43,7 @@ APascual_415Character::APascual_415Character()
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 	GetCharacterMovement()->AirControl = 0.5f;
 
+	// make sure we start out not teleporting
 	isTeleporting = false;
 }
 
